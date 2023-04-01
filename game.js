@@ -8,23 +8,37 @@ const spaceship = {
   size: 20,
   velocityX: 0,
   velocityY: 0,
-  thrust: 0.1,
+  thrust: 0.03,
 };
 
 // Astronaut properties
 const astronaut = {
-  x: 100,
-  y: 100,
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
   size: 10,
 };
 
 // Planet properties
-const planet = {
-  x: canvas.width / 2,
-  y: canvas.height / 2,
-  size: 50,
-  gravity: 1,
-};
+const planets = [
+  {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    size: 50,
+  },
+  {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: 25,
+  },
+  {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: 30,
+  },
+];
+
+// Score
+let score = 0;
 
 // Key states
 const keys = {
@@ -87,7 +101,6 @@ function handleTouchControls(touches) {
 // Game loop
 function gameLoop() {
   updateSpaceship();
-  applyGravity();
   checkRescue();
   drawScene();
   requestAnimationFrame(gameLoop);
@@ -112,15 +125,63 @@ function updateSpaceship() {
   spaceship.y += spaceship.velocityY;
 }
 
-// Apply gravity from the planet
-function applyGravity() {
-  const dx = planet.x - spaceship.x;
-  const dy = planet.y - spaceship.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  const gravityForce = planet.gravity * spaceship.size / (distance * distance);
-
-  spaceship.velocityX += gravityForce * dx / distance;
-  spaceship.velocityY += gravityForce * dy / distance;
-}
-
-// Check if the spaceship has rescued
+// Check if the spaceship has rescued the astronaut
+function checkRescue() {
+    const dx = astronaut.x - spaceship.x;
+    const dy = astronaut.y - spaceship.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+  
+    if (distance < spaceship.size / 2 + astronaut.size / 2) {
+      score++;
+      astronaut.x = Math.random() * canvas.width;
+      astronaut.y = Math.random() * canvas.height;
+    }
+  }
+  
+  // Draw scene
+  function drawScene() {
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+    // Draw planets
+    planets.forEach((planet) => {
+      ctx.beginPath();
+      ctx.arc(planet.x, planet.y, planet.size, 0, Math.PI * 2);
+      ctx.fillStyle = "#B5651D";
+      ctx.fill();
+      ctx.strokeStyle = "#964B00";
+      ctx.stroke();
+    });
+  
+    // Draw astronaut
+    ctx.beginPath();
+    ctx.arc(astronaut.x, astronaut.y, astronaut.size, 0, Math.PI * 2);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fill();
+    ctx.strokeStyle = "#000000";
+    ctx.stroke();
+  
+    // Draw spaceship
+    ctx.save();
+    ctx.translate(spaceship.x, spaceship.y);
+    ctx.rotate(spaceship.angle);
+    ctx.beginPath();
+    ctx.moveTo(-spaceship.size / 2, spaceship.size / 2);
+    ctx.lineTo(spaceship.size / 2, 0);
+    ctx.lineTo(-spaceship.size / 2, -spaceship.size / 2);
+    ctx.closePath();
+    ctx.fillStyle = "#FF0000";
+    ctx.fill();
+    ctx.strokeStyle = "#000000";
+    ctx.stroke();
+    ctx.restore();
+  
+    // Draw score
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText("Score: " + score, 10, 20);
+  }
+  
+  // Start the game loop
+  gameLoop();
+  
