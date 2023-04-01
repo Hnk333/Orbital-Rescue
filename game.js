@@ -5,10 +5,25 @@ const ctx = canvas.getContext("2d");
 const spaceship = {
   x: canvas.width / 2,
   y: canvas.height / 2,
-  size: 10,
+  size: 20,
   velocityX: 0,
   velocityY: 0,
   thrust: 0.1,
+};
+
+// Astronaut properties
+const astronaut = {
+  x: 100,
+  y: 100,
+  size: 10,
+};
+
+// Planet properties
+const planet = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  size: 50,
+  gravity: 1,
 };
 
 // Key states
@@ -72,7 +87,9 @@ function handleTouchControls(touches) {
 // Game loop
 function gameLoop() {
   updateSpaceship();
-  drawSpaceship();
+  applyGravity();
+  checkRescue();
+  drawScene();
   requestAnimationFrame(gameLoop);
 }
 
@@ -95,24 +112,15 @@ function updateSpaceship() {
   spaceship.y += spaceship.velocityY;
 }
 
-// Draw spaceship
-function drawSpaceship() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.save();
-  ctx.translate(spaceship.x, spaceship.y);
-  ctx.rotate(spaceship.angle);
-  ctx.beginPath();
-  ctx.moveTo(-spaceship.size / 2, spaceship.size);
-  ctx.lineTo(spaceship.size / 2, spaceship.size);
-  ctx.lineTo(0, -spaceship.size);
-  ctx.closePath();
-  ctx.fillStyle = "#fff";
-  ctx.fill();
-  ctx.restore();
+// Apply gravity from the planet
+function applyGravity() {
+  const dx = planet.x - spaceship.x;
+  const dy = planet.y - spaceship.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const gravityForce = planet.gravity * spaceship.size / (distance * distance);
+
+  spaceship.velocityX += gravityForce * dx / distance;
+  spaceship.velocityY += gravityForce * dy / distance;
 }
 
-// Initialize spaceship angle
-spaceship.angle = 0;
-
-// Start the game loop
-gameLoop();
+// Check if the spaceship has rescued
