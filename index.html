@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fish Pong</title>
+    <title>Space Suit Jump</title>
     <style>
         canvas {
             display: block;
@@ -18,67 +18,96 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        const paddleWidth = 10;
-        const paddleHeight = 60;
-        const fishSize = 15;
+        const character = {
+            x: 50,
+            y: 200,
+            width: 30,
+            height: 50,
+            velocityY: 0,
+            gravity: 0.5,
+            onGround: true,
+            jumpForce: -10
+        };
 
-        const leftPaddle = { x: 30, y: canvas.height / 2 - paddleHeight / 2 };
-        const rightPaddle = { x: canvas.width - 30 - paddleWidth, y: canvas.height / 2 - paddleHeight / 2 };
-        const fish = { x: canvas.width / 2, y: canvas.height / 2, velocityX: 2, velocityY: 2 };
+        const axes = [
+            { x: canvas.width, y: 220, width: 30, height: 20 }
+        ];
 
-        function drawPaddle(x, y) {
+        const jumpHoldDuration = 150;
+        let jumpStart = null;
+
+        canvas.addEventListener("touchstart", (event) => {
+            event.preventDefault();
+            if (character.onGround) {
+                character.onGround = false;
+                character.velocityY = character.jumpForce;
+                jumpStart = Date.now();
+            }
+        });
+
+        canvas.addEventListener("touchend", (event) => {
+            event.preventDefault();
+            jumpStart = null;
+        });
+
+        function drawCharacter(x, y, width, height) {
             ctx.beginPath();
-            ctx.rect(x, y, paddleWidth, paddleHeight);
-            ctx.fillStyle = "#000000";
+            ctx.rect(x, y, width, height);
+            ctx.fillStyle = "#0000FF";
             ctx.fill();
             ctx.closePath();
         }
 
-        function drawFish(x, y) {
+        function drawAxe(x, y, width, height) {
             ctx.beginPath();
-            ctx.arc(x, y, fishSize, 0, Math.PI * 2);
-            ctx.fillStyle = "#FFA500";
+            ctx.rect(x, y, width, height);
+            ctx.fillStyle = "#FF0000";
             ctx.fill();
             ctx.closePath();
         }
 
         function gameLoop() {
-            // Update fish position
-            fish.x += fish.velocityX;
-            fish.y += fish.velocityY;
+            // Update character position
+            character.velocityY += character.gravity;
+            character.y += character.velocityY;
 
-            // Collision with paddles
-            if ((fish.x - fishSize <= leftPaddle.x + paddleWidth && fish.y >= leftPaddle.y && fish.y <= leftPaddle.y + paddleHeight) ||
-                (fish.x + fishSize >= rightPaddle.x && fish.y >= rightPaddle.y && fish.y <= rightPaddle.y + paddleHeight)) {
-                fish.velocityX = -fish.velocityX;
+            // Keep character grounded
+            if (character.y > 200) {
+                character.y = 200;
+                character.onGround = true;
             }
 
-            // Collision with top and bottom walls
-            if (fish.y - fishSize <= 0 || fish.y + fishSize >= canvas.height) {
-                fish.velocityY = -fish.velocityY;
+            // Apply jump force when holding touch
+            if (jumpStart && Date.now() - jumpStart < jumpHoldDuration && !character.onGround) {
+                character.velocityY = character.jumpForce;
             }
 
-            // Update paddles
-            if (leftPaddle.y + paddleHeight / 2 > fish.y) {
-                leftPaddle.y -= 2;
-            } else {
-                leftPaddle.y += 2;
-            }
-            if (rightPaddle.y + paddleHeight / 2 > fish.y) {
-                rightPaddle.y -= 2;
-            } else {
-                rightPaddle.y += 2;
+            // Update axes position
+            for (const axe of axes) {
+                axe.x -= 5;
+
+                if (axe.x < -axe.width) {
+                    axe.x = canvas.width;
+                }
+
+                if (character.x < axe.x + axe.width && character.x + character.width > axe.x &&
+                    character.y < axe.y + axe.height && character.y + character.height > axe.y) {
+                    // Collision detected, reset character position
+                    character.y = 200;
+                    character.velocityY = 0;
+                }
             }
 
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw paddles
-            drawPaddle(leftPaddle.x, leftPaddle.y);
-            drawPaddle(rightPaddle.x, rightPaddle.y);
+            // Draw character
+            drawCharacter(character.x, character.y, character.width, character.height);
 
-            // Draw fish
-            drawFish(fish.x, fish.y);
+            // Draw axes
+            for (const axe of axes) {
+                drawAxe(axe.x, axe.y, axe.width, axe.height);
+            }
 
             requestAnimationFrame(gameLoop);
         }
