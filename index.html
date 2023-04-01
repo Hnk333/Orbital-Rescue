@@ -1,13 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbital Rescue</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spaceship Race</title>
+  <style>
+    canvas {
+      display: block;
+      margin: auto;
+      background-color: #f0f0f0;
+    }
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <script src="game.js"></script>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Spaceship properties
+    const spaceship = {
+      x: 50,
+      y: canvas.height / 2,
+      size: 20,
+      velocityX: 2,
+      velocityY: 0,
+      thrust: 0.1,
+    };
+
+    // Track properties
+    const trackWidth = 150;
+    const trackHeight = 200;
+    const trackSegments = [
+      { x: 150, y: 300 },
+      { x: 350, y: 100 },
+      { x: 550, y: 400 },
+      { x: 750, y: 100 },
+    ];
+
+    // Key states
+    const keys = {
+      ArrowUp: false,
+      ArrowDown: false,
+    };
+
+    // Add event listeners for keyboard input
+    window.addEventListener("keydown", (event) => {
+      if (event.key in keys) {
+        event.preventDefault();
+        keys[event.key] = true;
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      if (event.key in keys) {
+        event.preventDefault();
+        keys[event.key] = false;
+      }
+    });
+
+    // Game loop
+    function gameLoop() {
+      updateSpaceship();
+      checkCollision();
+      drawScene();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Update spaceship position
+    function updateSpaceship() {
+      if (keys.ArrowUp) {
+        spaceship.velocityY -= spaceship.thrust;
+      }
+
+      if (keys.ArrowDown) {
+        spaceship.velocityY += spaceship.thrust;
+      }
+
+      spaceship.y += spaceship.velocityY;
+    }
+
+    // Check for collision with track walls
+    function checkCollision() {
+      const minY = getMinY(spaceship.x);
+      const maxY = getMaxY(spaceship.x);
+
+      if (spaceship.y - spaceship.size / 2 <= minY || spaceship.y + spaceship.size / 2 >= maxY) {
+        resetSpaceship();
+      }
+    }
+
+    // Get the minY value for the current spaceship x position
+    function getMinY(x) {
+      for (let i = 1; i < trackSegments.length; i++) {
+        if (x >= trackSegments[i - 1].x && x <= trackSegments[i].x) {
+          return trackSegments[i - 1].y - trackHeight / 2;
+        }
+      }
+      return 0;
+    }
+
+    // Get the maxY value for the current spaceship x position
+    function getMaxY(x) {
+      for (let i = 1; i < trackSegments.length; i++) {
+        if (x >= trackSegments[i - 1].x && x <= trackSegments[i].x) {
+          return trackSegments[i - 1].y + trackHeight / 2;
+        }
+      }
+      return canvas.height;
+    }
+
+        // Reset spaceship position
+        function resetSpaceship() {
+      spaceship.x = 50;
+      spaceship.y = canvas.height / 2;
+      spaceship.velocityY = 0;
+    }
+
+    // Draw scene
+    function drawScene() {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw track
+      ctx.beginPath();
+      ctx.moveTo(trackSegments[0].x, trackSegments[0].y - trackHeight / 2);
+      for (const segment of trackSegments) {
+        ctx.lineTo(segment.x, segment.y - trackHeight / 2);
+      }
+      ctx.lineTo(trackSegments[trackSegments.length - 1].x, canvas.height);
+      ctx.lineTo(trackSegments[0].x, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = "#A9A9A9";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(trackSegments[0].x, trackSegments[0].y + trackHeight / 2);
+      for (const segment of trackSegments) {
+        ctx.lineTo(segment.x, segment.y + trackHeight / 2);
+      }
+      ctx.lineTo(trackSegments[trackSegments.length - 1].x, 0);
+      ctx.lineTo(trackSegments[0].x, 0);
+      ctx.closePath();
+      ctx.fillStyle = "#A9A9A9";
+      ctx.fill();
+
+      // Draw spaceship
+      ctx.beginPath();
+      ctx.arc(spaceship.x, spaceship.y, spaceship.size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = "#FF0000";
+      ctx.fill();
+      ctx.strokeStyle = "#000000";
+      ctx.stroke();
+    }
+
+    // Start the game loop
+    gameLoop();
+  </script>
 </body>
 </html>
